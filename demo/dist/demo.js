@@ -4139,6 +4139,10 @@ typeof navigator === "object" && (function () {
 	        }, 10);
 	      }); // Setup the player
 
+	      Plyr.registerPlugin("plugin", (player, video, root) => {
+	      	   console.log("", player);
+	      });
+
 	      var player = new Plyr(selector, {
 	        debug: true,
 	        title: 'View From A Blue Moon',

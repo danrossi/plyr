@@ -31,6 +31,10 @@ import { parseUrl } from './utils/urls';
 // TODO: Use a WeakMap for private globals
 // const globals = new WeakMap();
 
+const _registeredPlugins = new Map();
+
+//_registeredPlugins.set("plugins", {});
+
 // Plyr instance
 class Plyr {
     constructor(target, options) {
@@ -299,6 +303,11 @@ class Plyr {
             this.ads = new Ads(this);
         }
 
+        //iterate registered plugins
+        _registeredPlugins.forEach(plugin => {
+            plugin(this, this.media, this.elements.container);
+        });
+
         // Autoplay if required
         if (this.config.autoplay) {
             this.play();
@@ -306,6 +315,11 @@ class Plyr {
 
         // Seek time will be recorded (in listeners.js) so we can prevent hiding controls for a few seconds after seek
         this.lastSeekTime = 0;
+    }
+
+
+    static registerPlugin(name, plugin) {
+        _registeredPlugins.set(name, plugin);
     }
 
     // ---------------------------------------

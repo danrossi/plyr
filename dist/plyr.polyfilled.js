@@ -1411,217 +1411,6 @@ typeof navigator === "object" && (function (global, factory) {
     });
   }
 
-  var _iterStep = function (done, value) {
-    return { value: value, done: !!done };
-  };
-
-  var def = _objectDp.f;
-
-  var TAG$1 = _wks('toStringTag');
-
-  var _setToStringTag = function (it, tag, stat) {
-    if (it && !_has(it = stat ? it : it.prototype, TAG$1)) def(it, TAG$1, { configurable: true, value: tag });
-  };
-
-  var IteratorPrototype = {};
-
-  // 25.1.2.1.1 %IteratorPrototype%[@@iterator]()
-  _hide(IteratorPrototype, _wks('iterator'), function () { return this; });
-
-  var _iterCreate = function (Constructor, NAME, next) {
-    Constructor.prototype = _objectCreate(IteratorPrototype, { next: _propertyDesc(1, next) });
-    _setToStringTag(Constructor, NAME + ' Iterator');
-  };
-
-  // 19.1.2.9 / 15.2.3.2 Object.getPrototypeOf(O)
-
-
-  var IE_PROTO$2 = _sharedKey('IE_PROTO');
-  var ObjectProto = Object.prototype;
-
-  var _objectGpo = Object.getPrototypeOf || function (O) {
-    O = _toObject(O);
-    if (_has(O, IE_PROTO$2)) return O[IE_PROTO$2];
-    if (typeof O.constructor == 'function' && O instanceof O.constructor) {
-      return O.constructor.prototype;
-    } return O instanceof Object ? ObjectProto : null;
-  };
-
-  var ITERATOR$3 = _wks('iterator');
-  var BUGGY = !([].keys && 'next' in [].keys()); // Safari has buggy iterators w/o `next`
-  var FF_ITERATOR = '@@iterator';
-  var KEYS = 'keys';
-  var VALUES = 'values';
-
-  var returnThis = function () { return this; };
-
-  var _iterDefine = function (Base, NAME, Constructor, next, DEFAULT, IS_SET, FORCED) {
-    _iterCreate(Constructor, NAME, next);
-    var getMethod = function (kind) {
-      if (!BUGGY && kind in proto) return proto[kind];
-      switch (kind) {
-        case KEYS: return function keys() { return new Constructor(this, kind); };
-        case VALUES: return function values() { return new Constructor(this, kind); };
-      } return function entries() { return new Constructor(this, kind); };
-    };
-    var TAG = NAME + ' Iterator';
-    var DEF_VALUES = DEFAULT == VALUES;
-    var VALUES_BUG = false;
-    var proto = Base.prototype;
-    var $native = proto[ITERATOR$3] || proto[FF_ITERATOR] || DEFAULT && proto[DEFAULT];
-    var $default = $native || getMethod(DEFAULT);
-    var $entries = DEFAULT ? !DEF_VALUES ? $default : getMethod('entries') : undefined;
-    var $anyNative = NAME == 'Array' ? proto.entries || $native : $native;
-    var methods, key, IteratorPrototype;
-    // Fix native
-    if ($anyNative) {
-      IteratorPrototype = _objectGpo($anyNative.call(new Base()));
-      if (IteratorPrototype !== Object.prototype && IteratorPrototype.next) {
-        // Set @@toStringTag to native iterators
-        _setToStringTag(IteratorPrototype, TAG, true);
-        // fix for some old engines
-        if (typeof IteratorPrototype[ITERATOR$3] != 'function') _hide(IteratorPrototype, ITERATOR$3, returnThis);
-      }
-    }
-    // fix Array#{values, @@iterator}.name in V8 / FF
-    if (DEF_VALUES && $native && $native.name !== VALUES) {
-      VALUES_BUG = true;
-      $default = function values() { return $native.call(this); };
-    }
-    // Define iterator
-    if (BUGGY || VALUES_BUG || !proto[ITERATOR$3]) {
-      _hide(proto, ITERATOR$3, $default);
-    }
-    // Plug for library
-    _iterators[NAME] = $default;
-    _iterators[TAG] = returnThis;
-    if (DEFAULT) {
-      methods = {
-        values: DEF_VALUES ? $default : getMethod(VALUES),
-        keys: IS_SET ? $default : getMethod(KEYS),
-        entries: $entries
-      };
-      if (FORCED) for (key in methods) {
-        if (!(key in proto)) _redefine(proto, key, methods[key]);
-      } else _export(_export.P + _export.F * (BUGGY || VALUES_BUG), NAME, methods);
-    }
-    return methods;
-  };
-
-  // 22.1.3.4 Array.prototype.entries()
-  // 22.1.3.13 Array.prototype.keys()
-  // 22.1.3.29 Array.prototype.values()
-  // 22.1.3.30 Array.prototype[@@iterator]()
-  var es6_array_iterator = _iterDefine(Array, 'Array', function (iterated, kind) {
-    this._t = _toIobject(iterated); // target
-    this._i = 0;                   // next index
-    this._k = kind;                // kind
-  // 22.1.5.2.1 %ArrayIteratorPrototype%.next()
-  }, function () {
-    var O = this._t;
-    var kind = this._k;
-    var index = this._i++;
-    if (!O || index >= O.length) {
-      this._t = undefined;
-      return _iterStep(1);
-    }
-    if (kind == 'keys') return _iterStep(0, index);
-    if (kind == 'values') return _iterStep(0, O[index]);
-    return _iterStep(0, [index, O[index]]);
-  }, 'values');
-
-  // argumentsList[@@iterator] is %ArrayProto_values% (9.4.4.6, 9.4.4.7)
-  _iterators.Arguments = _iterators.Array;
-
-  _addToUnscopables('keys');
-  _addToUnscopables('values');
-  _addToUnscopables('entries');
-
-  var ITERATOR$4 = _wks('iterator');
-  var TO_STRING_TAG = _wks('toStringTag');
-  var ArrayValues = _iterators.Array;
-
-  var DOMIterables = {
-    CSSRuleList: true, // TODO: Not spec compliant, should be false.
-    CSSStyleDeclaration: false,
-    CSSValueList: false,
-    ClientRectList: false,
-    DOMRectList: false,
-    DOMStringList: false,
-    DOMTokenList: true,
-    DataTransferItemList: false,
-    FileList: false,
-    HTMLAllCollection: false,
-    HTMLCollection: false,
-    HTMLFormElement: false,
-    HTMLSelectElement: false,
-    MediaList: true, // TODO: Not spec compliant, should be false.
-    MimeTypeArray: false,
-    NamedNodeMap: false,
-    NodeList: true,
-    PaintRequestList: false,
-    Plugin: false,
-    PluginArray: false,
-    SVGLengthList: false,
-    SVGNumberList: false,
-    SVGPathSegList: false,
-    SVGPointList: false,
-    SVGStringList: false,
-    SVGTransformList: false,
-    SourceBufferList: false,
-    StyleSheetList: true, // TODO: Not spec compliant, should be false.
-    TextTrackCueList: false,
-    TextTrackList: false,
-    TouchList: false
-  };
-
-  for (var collections = _objectKeys(DOMIterables), i = 0; i < collections.length; i++) {
-    var NAME = collections[i];
-    var explicit = DOMIterables[NAME];
-    var Collection = _global[NAME];
-    var proto$1 = Collection && Collection.prototype;
-    var key$1;
-    if (proto$1) {
-      if (!proto$1[ITERATOR$4]) _hide(proto$1, ITERATOR$4, ArrayValues);
-      if (!proto$1[TO_STRING_TAG]) _hide(proto$1, TO_STRING_TAG, NAME);
-      _iterators[NAME] = ArrayValues;
-      if (explicit) for (key$1 in es6_array_iterator) if (!proto$1[key$1]) _redefine(proto$1, key$1, es6_array_iterator[key$1], true);
-    }
-  }
-
-  // true  -> String#at
-  // false -> String#codePointAt
-  var _stringAt = function (TO_STRING) {
-    return function (that, pos) {
-      var s = String(_defined(that));
-      var i = _toInteger(pos);
-      var l = s.length;
-      var a, b;
-      if (i < 0 || i >= l) return TO_STRING ? '' : undefined;
-      a = s.charCodeAt(i);
-      return a < 0xd800 || a > 0xdbff || i + 1 === l || (b = s.charCodeAt(i + 1)) < 0xdc00 || b > 0xdfff
-        ? TO_STRING ? s.charAt(i) : a
-        : TO_STRING ? s.slice(i, i + 2) : (a - 0xd800 << 10) + (b - 0xdc00) + 0x10000;
-    };
-  };
-
-  var $at = _stringAt(true);
-
-  // 21.1.3.27 String.prototype[@@iterator]()
-  _iterDefine(String, 'String', function (iterated) {
-    this._t = String(iterated); // target
-    this._i = 0;                // next index
-  // 21.1.5.2.1 %StringIteratorPrototype%.next()
-  }, function () {
-    var O = this._t;
-    var index = this._i;
-    var point;
-    if (index >= O.length) return { value: undefined, done: true };
-    point = $at(O, index);
-    this._i += point.length;
-    return { value: point, done: false };
-  });
-
   var _meta = createCommonjsModule(function (module) {
   var META = _uid('meta');
 
@@ -1843,6 +1632,14 @@ typeof navigator === "object" && (function (global, factory) {
       return that;
     },
     ufstore: uncaughtFrozenStore
+  };
+
+  var def = _objectDp.f;
+
+  var TAG$1 = _wks('toStringTag');
+
+  var _setToStringTag = function (it, tag, stat) {
+    if (it && !_has(it = stat ? it : it.prototype, TAG$1)) def(it, TAG$1, { configurable: true, value: tag });
   };
 
   var _collection = function (NAME, wrapper, methods, common, IS_MAP, IS_WEAK) {
@@ -2073,6 +1870,380 @@ typeof navigator === "object" && (function (global, factory) {
     throw new TypeError("Invalid attempt to destructure non-iterable instance");
   }
 
+  var _iterStep = function (done, value) {
+    return { value: value, done: !!done };
+  };
+
+  var IteratorPrototype = {};
+
+  // 25.1.2.1.1 %IteratorPrototype%[@@iterator]()
+  _hide(IteratorPrototype, _wks('iterator'), function () { return this; });
+
+  var _iterCreate = function (Constructor, NAME, next) {
+    Constructor.prototype = _objectCreate(IteratorPrototype, { next: _propertyDesc(1, next) });
+    _setToStringTag(Constructor, NAME + ' Iterator');
+  };
+
+  // 19.1.2.9 / 15.2.3.2 Object.getPrototypeOf(O)
+
+
+  var IE_PROTO$2 = _sharedKey('IE_PROTO');
+  var ObjectProto = Object.prototype;
+
+  var _objectGpo = Object.getPrototypeOf || function (O) {
+    O = _toObject(O);
+    if (_has(O, IE_PROTO$2)) return O[IE_PROTO$2];
+    if (typeof O.constructor == 'function' && O instanceof O.constructor) {
+      return O.constructor.prototype;
+    } return O instanceof Object ? ObjectProto : null;
+  };
+
+  var ITERATOR$3 = _wks('iterator');
+  var BUGGY = !([].keys && 'next' in [].keys()); // Safari has buggy iterators w/o `next`
+  var FF_ITERATOR = '@@iterator';
+  var KEYS = 'keys';
+  var VALUES = 'values';
+
+  var returnThis = function () { return this; };
+
+  var _iterDefine = function (Base, NAME, Constructor, next, DEFAULT, IS_SET, FORCED) {
+    _iterCreate(Constructor, NAME, next);
+    var getMethod = function (kind) {
+      if (!BUGGY && kind in proto) return proto[kind];
+      switch (kind) {
+        case KEYS: return function keys() { return new Constructor(this, kind); };
+        case VALUES: return function values() { return new Constructor(this, kind); };
+      } return function entries() { return new Constructor(this, kind); };
+    };
+    var TAG = NAME + ' Iterator';
+    var DEF_VALUES = DEFAULT == VALUES;
+    var VALUES_BUG = false;
+    var proto = Base.prototype;
+    var $native = proto[ITERATOR$3] || proto[FF_ITERATOR] || DEFAULT && proto[DEFAULT];
+    var $default = $native || getMethod(DEFAULT);
+    var $entries = DEFAULT ? !DEF_VALUES ? $default : getMethod('entries') : undefined;
+    var $anyNative = NAME == 'Array' ? proto.entries || $native : $native;
+    var methods, key, IteratorPrototype;
+    // Fix native
+    if ($anyNative) {
+      IteratorPrototype = _objectGpo($anyNative.call(new Base()));
+      if (IteratorPrototype !== Object.prototype && IteratorPrototype.next) {
+        // Set @@toStringTag to native iterators
+        _setToStringTag(IteratorPrototype, TAG, true);
+        // fix for some old engines
+        if (typeof IteratorPrototype[ITERATOR$3] != 'function') _hide(IteratorPrototype, ITERATOR$3, returnThis);
+      }
+    }
+    // fix Array#{values, @@iterator}.name in V8 / FF
+    if (DEF_VALUES && $native && $native.name !== VALUES) {
+      VALUES_BUG = true;
+      $default = function values() { return $native.call(this); };
+    }
+    // Define iterator
+    if (BUGGY || VALUES_BUG || !proto[ITERATOR$3]) {
+      _hide(proto, ITERATOR$3, $default);
+    }
+    // Plug for library
+    _iterators[NAME] = $default;
+    _iterators[TAG] = returnThis;
+    if (DEFAULT) {
+      methods = {
+        values: DEF_VALUES ? $default : getMethod(VALUES),
+        keys: IS_SET ? $default : getMethod(KEYS),
+        entries: $entries
+      };
+      if (FORCED) for (key in methods) {
+        if (!(key in proto)) _redefine(proto, key, methods[key]);
+      } else _export(_export.P + _export.F * (BUGGY || VALUES_BUG), NAME, methods);
+    }
+    return methods;
+  };
+
+  // 22.1.3.4 Array.prototype.entries()
+  // 22.1.3.13 Array.prototype.keys()
+  // 22.1.3.29 Array.prototype.values()
+  // 22.1.3.30 Array.prototype[@@iterator]()
+  var es6_array_iterator = _iterDefine(Array, 'Array', function (iterated, kind) {
+    this._t = _toIobject(iterated); // target
+    this._i = 0;                   // next index
+    this._k = kind;                // kind
+  // 22.1.5.2.1 %ArrayIteratorPrototype%.next()
+  }, function () {
+    var O = this._t;
+    var kind = this._k;
+    var index = this._i++;
+    if (!O || index >= O.length) {
+      this._t = undefined;
+      return _iterStep(1);
+    }
+    if (kind == 'keys') return _iterStep(0, index);
+    if (kind == 'values') return _iterStep(0, O[index]);
+    return _iterStep(0, [index, O[index]]);
+  }, 'values');
+
+  // argumentsList[@@iterator] is %ArrayProto_values% (9.4.4.6, 9.4.4.7)
+  _iterators.Arguments = _iterators.Array;
+
+  _addToUnscopables('keys');
+  _addToUnscopables('values');
+  _addToUnscopables('entries');
+
+  var ITERATOR$4 = _wks('iterator');
+  var TO_STRING_TAG = _wks('toStringTag');
+  var ArrayValues = _iterators.Array;
+
+  var DOMIterables = {
+    CSSRuleList: true, // TODO: Not spec compliant, should be false.
+    CSSStyleDeclaration: false,
+    CSSValueList: false,
+    ClientRectList: false,
+    DOMRectList: false,
+    DOMStringList: false,
+    DOMTokenList: true,
+    DataTransferItemList: false,
+    FileList: false,
+    HTMLAllCollection: false,
+    HTMLCollection: false,
+    HTMLFormElement: false,
+    HTMLSelectElement: false,
+    MediaList: true, // TODO: Not spec compliant, should be false.
+    MimeTypeArray: false,
+    NamedNodeMap: false,
+    NodeList: true,
+    PaintRequestList: false,
+    Plugin: false,
+    PluginArray: false,
+    SVGLengthList: false,
+    SVGNumberList: false,
+    SVGPathSegList: false,
+    SVGPointList: false,
+    SVGStringList: false,
+    SVGTransformList: false,
+    SourceBufferList: false,
+    StyleSheetList: true, // TODO: Not spec compliant, should be false.
+    TextTrackCueList: false,
+    TextTrackList: false,
+    TouchList: false
+  };
+
+  for (var collections = _objectKeys(DOMIterables), i = 0; i < collections.length; i++) {
+    var NAME = collections[i];
+    var explicit = DOMIterables[NAME];
+    var Collection = _global[NAME];
+    var proto$1 = Collection && Collection.prototype;
+    var key$1;
+    if (proto$1) {
+      if (!proto$1[ITERATOR$4]) _hide(proto$1, ITERATOR$4, ArrayValues);
+      if (!proto$1[TO_STRING_TAG]) _hide(proto$1, TO_STRING_TAG, NAME);
+      _iterators[NAME] = ArrayValues;
+      if (explicit) for (key$1 in es6_array_iterator) if (!proto$1[key$1]) _redefine(proto$1, key$1, es6_array_iterator[key$1], true);
+    }
+  }
+
+  // true  -> String#at
+  // false -> String#codePointAt
+  var _stringAt = function (TO_STRING) {
+    return function (that, pos) {
+      var s = String(_defined(that));
+      var i = _toInteger(pos);
+      var l = s.length;
+      var a, b;
+      if (i < 0 || i >= l) return TO_STRING ? '' : undefined;
+      a = s.charCodeAt(i);
+      return a < 0xd800 || a > 0xdbff || i + 1 === l || (b = s.charCodeAt(i + 1)) < 0xdc00 || b > 0xdfff
+        ? TO_STRING ? s.charAt(i) : a
+        : TO_STRING ? s.slice(i, i + 2) : (a - 0xd800 << 10) + (b - 0xdc00) + 0x10000;
+    };
+  };
+
+  var $at = _stringAt(true);
+
+  // 21.1.3.27 String.prototype[@@iterator]()
+  _iterDefine(String, 'String', function (iterated) {
+    this._t = String(iterated); // target
+    this._i = 0;                // next index
+  // 21.1.5.2.1 %StringIteratorPrototype%.next()
+  }, function () {
+    var O = this._t;
+    var index = this._i;
+    var point;
+    if (index >= O.length) return { value: undefined, done: true };
+    point = $at(O, index);
+    this._i += point.length;
+    return { value: point, done: false };
+  });
+
+  var SPECIES$1 = _wks('species');
+
+  var _setSpecies = function (KEY) {
+    var C = _global[KEY];
+    if (_descriptors && C && !C[SPECIES$1]) _objectDp.f(C, SPECIES$1, {
+      configurable: true,
+      get: function () { return this; }
+    });
+  };
+
+  var dP$2 = _objectDp.f;
+
+
+
+
+
+
+
+
+
+  var fastKey = _meta.fastKey;
+
+  var SIZE = _descriptors ? '_s' : 'size';
+
+  var getEntry = function (that, key) {
+    // fast case
+    var index = fastKey(key);
+    var entry;
+    if (index !== 'F') return that._i[index];
+    // frozen object case
+    for (entry = that._f; entry; entry = entry.n) {
+      if (entry.k == key) return entry;
+    }
+  };
+
+  var _collectionStrong = {
+    getConstructor: function (wrapper, NAME, IS_MAP, ADDER) {
+      var C = wrapper(function (that, iterable) {
+        _anInstance(that, C, NAME, '_i');
+        that._t = NAME;         // collection type
+        that._i = _objectCreate(null); // index
+        that._f = undefined;    // first entry
+        that._l = undefined;    // last entry
+        that[SIZE] = 0;         // size
+        if (iterable != undefined) _forOf(iterable, IS_MAP, that[ADDER], that);
+      });
+      _redefineAll(C.prototype, {
+        // 23.1.3.1 Map.prototype.clear()
+        // 23.2.3.2 Set.prototype.clear()
+        clear: function clear() {
+          for (var that = _validateCollection(this, NAME), data = that._i, entry = that._f; entry; entry = entry.n) {
+            entry.r = true;
+            if (entry.p) entry.p = entry.p.n = undefined;
+            delete data[entry.i];
+          }
+          that._f = that._l = undefined;
+          that[SIZE] = 0;
+        },
+        // 23.1.3.3 Map.prototype.delete(key)
+        // 23.2.3.4 Set.prototype.delete(value)
+        'delete': function (key) {
+          var that = _validateCollection(this, NAME);
+          var entry = getEntry(that, key);
+          if (entry) {
+            var next = entry.n;
+            var prev = entry.p;
+            delete that._i[entry.i];
+            entry.r = true;
+            if (prev) prev.n = next;
+            if (next) next.p = prev;
+            if (that._f == entry) that._f = next;
+            if (that._l == entry) that._l = prev;
+            that[SIZE]--;
+          } return !!entry;
+        },
+        // 23.2.3.6 Set.prototype.forEach(callbackfn, thisArg = undefined)
+        // 23.1.3.5 Map.prototype.forEach(callbackfn, thisArg = undefined)
+        forEach: function forEach(callbackfn /* , that = undefined */) {
+          _validateCollection(this, NAME);
+          var f = _ctx(callbackfn, arguments.length > 1 ? arguments[1] : undefined, 3);
+          var entry;
+          while (entry = entry ? entry.n : this._f) {
+            f(entry.v, entry.k, this);
+            // revert to the last existing entry
+            while (entry && entry.r) entry = entry.p;
+          }
+        },
+        // 23.1.3.7 Map.prototype.has(key)
+        // 23.2.3.7 Set.prototype.has(value)
+        has: function has(key) {
+          return !!getEntry(_validateCollection(this, NAME), key);
+        }
+      });
+      if (_descriptors) dP$2(C.prototype, 'size', {
+        get: function () {
+          return _validateCollection(this, NAME)[SIZE];
+        }
+      });
+      return C;
+    },
+    def: function (that, key, value) {
+      var entry = getEntry(that, key);
+      var prev, index;
+      // change existing entry
+      if (entry) {
+        entry.v = value;
+      // create new entry
+      } else {
+        that._l = entry = {
+          i: index = fastKey(key, true), // <- index
+          k: key,                        // <- key
+          v: value,                      // <- value
+          p: prev = that._l,             // <- previous entry
+          n: undefined,                  // <- next entry
+          r: false                       // <- removed
+        };
+        if (!that._f) that._f = entry;
+        if (prev) prev.n = entry;
+        that[SIZE]++;
+        // add to index
+        if (index !== 'F') that._i[index] = entry;
+      } return that;
+    },
+    getEntry: getEntry,
+    setStrong: function (C, NAME, IS_MAP) {
+      // add .keys, .values, .entries, [@@iterator]
+      // 23.1.3.4, 23.1.3.8, 23.1.3.11, 23.1.3.12, 23.2.3.5, 23.2.3.8, 23.2.3.10, 23.2.3.11
+      _iterDefine(C, NAME, function (iterated, kind) {
+        this._t = _validateCollection(iterated, NAME); // target
+        this._k = kind;                     // kind
+        this._l = undefined;                // previous
+      }, function () {
+        var that = this;
+        var kind = that._k;
+        var entry = that._l;
+        // revert to the last existing entry
+        while (entry && entry.r) entry = entry.p;
+        // get next entry
+        if (!that._t || !(that._l = entry = entry ? entry.n : that._t._f)) {
+          // or finish the iteration
+          that._t = undefined;
+          return _iterStep(1);
+        }
+        // return step by kind
+        if (kind == 'keys') return _iterStep(0, entry.k);
+        if (kind == 'values') return _iterStep(0, entry.v);
+        return _iterStep(0, [entry.k, entry.v]);
+      }, IS_MAP ? 'entries' : 'values', !IS_MAP, true);
+
+      // add [@@species], 23.1.2.2, 23.2.2.2
+      _setSpecies(NAME);
+    }
+  };
+
+  var MAP = 'Map';
+
+  // 23.1 Map Objects
+  var es6_map = _collection(MAP, function (get) {
+    return function Map() { return get(this, arguments.length > 0 ? arguments[0] : undefined); };
+  }, {
+    // 23.1.3.6 Map.prototype.get(key)
+    get: function get(key) {
+      var entry = _collectionStrong.getEntry(_validateCollection(this, MAP), key);
+      return entry && entry.v;
+    },
+    // 23.1.3.9 Map.prototype.set(key, value)
+    set: function set(key, value) {
+      return _collectionStrong.def(_validateCollection(this, MAP), key === 0 ? 0 : key, value);
+    }
+  }, _collectionStrong, true);
+
   // 19.1.3.1 Object.assign(target, source)
 
 
@@ -2199,11 +2370,11 @@ typeof navigator === "object" && (function (global, factory) {
   // 7.3.20 SpeciesConstructor(O, defaultConstructor)
 
 
-  var SPECIES$1 = _wks('species');
+  var SPECIES$2 = _wks('species');
   var _speciesConstructor = function (O, D) {
     var C = _anObject(O).constructor;
     var S;
-    return C === undefined || (S = _anObject(C)[SPECIES$1]) == undefined ? D : _aFunction(S);
+    return C === undefined || (S = _anObject(C)[SPECIES$2]) == undefined ? D : _aFunction(S);
   };
 
   // fast apply, http://jsperf.lnkit.com/fast-apply/5
@@ -2413,16 +2584,6 @@ typeof navigator === "object" && (function (global, factory) {
     var resolve = promiseCapability.resolve;
     resolve(x);
     return promiseCapability.promise;
-  };
-
-  var SPECIES$2 = _wks('species');
-
-  var _setSpecies = function (KEY) {
-    var C = _global[KEY];
-    if (_descriptors && C && !C[SPECIES$2]) _objectDp.f(C, SPECIES$2, {
-      configurable: true,
-      get: function () { return this; }
-    });
   };
 
   var task = _task.set;
@@ -2650,7 +2811,7 @@ typeof navigator === "object" && (function (global, factory) {
       return capability.promise;
     }
   });
-  _export(_export.S + _export.F * (!USE_NATIVE), PROMISE, {
+  _export(_export.S + _export.F * (_library || !USE_NATIVE), PROMISE, {
     // 25.4.4.6 Promise.resolve(x)
     resolve: function resolve(x) {
       return _promiseResolve(_library && this === Wrapper ? $Promise : this, x);
@@ -3195,15 +3356,12 @@ typeof navigator === "object" && (function (global, factory) {
   } // Element matches selector
 
   function matches(element, selector) {
-    var prototype = {
-      Element: Element
-    };
 
     function match() {
       return Array.from(document.querySelectorAll(selector)).includes(this);
     }
 
-    var matches = prototype.matches || prototype.webkitMatchesSelector || prototype.mozMatchesSelector || prototype.msMatchesSelector || match;
+    var matches = match;
     return matches.call(element, selector);
   } // Find all elements
 
@@ -3568,7 +3726,7 @@ typeof navigator === "object" && (function (global, factory) {
     return extend.apply(void 0, [target].concat(sources));
   }
 
-  var dP$2 = _objectDp.f;
+  var dP$3 = _objectDp.f;
   var gOPN$1 = _objectGopn.f;
 
 
@@ -3596,7 +3754,7 @@ typeof navigator === "object" && (function (global, factory) {
         , tiRE ? this : proto$2, $RegExp);
     };
     var proxy = function (key) {
-      key in $RegExp || dP$2($RegExp, key, {
+      key in $RegExp || dP$3($RegExp, key, {
         configurable: true,
         get: function () { return Base$1[key]; },
         set: function (it) { Base$1[key] = it; }
@@ -4747,19 +4905,19 @@ typeof navigator === "object" && (function (global, factory) {
         if (!is.element(this.elements.settings.panels.loop)) {
             return;
         }
-         const options = ['start', 'end', 'all', 'reset'];
+          const options = ['start', 'end', 'all', 'reset'];
         const list = this.elements.settings.panels.loop.querySelector('[role="menu"]');
-         // Show the pane and tab
+          // Show the pane and tab
         toggleHidden(this.elements.settings.buttons.loop, false);
         toggleHidden(this.elements.settings.panels.loop, false);
-         // Toggle the pane and tab
+          // Toggle the pane and tab
         const toggle = !is.empty(this.loop.options);
         controls.toggleMenuButton.call(this, 'loop', toggle);
-         // Empty the menu
+          // Empty the menu
         emptyElement(list);
-         options.forEach(option => {
+          options.forEach(option => {
             const item = createElement('li');
-             const button = createElement(
+              const button = createElement(
                 'button',
                 extend(getAttributesFromSelector(this.config.selectors.buttons.loop), {
                     type: 'button',
@@ -4768,11 +4926,11 @@ typeof navigator === "object" && (function (global, factory) {
                 }),
                 i18n.get(option, this.config)
             );
-             if (['start', 'end'].includes(option)) {
+              if (['start', 'end'].includes(option)) {
                 const badge = controls.createBadge.call(this, '00:00');
                 button.appendChild(badge);
             }
-             item.appendChild(button);
+              item.appendChild(button);
             list.appendChild(item);
         });
     }, */
@@ -7375,13 +7533,13 @@ typeof navigator === "object" && (function (global, factory) {
     return Listeners;
   }();
 
-  var dP$3 = _objectDp.f;
+  var dP$4 = _objectDp.f;
   var FProto = Function.prototype;
   var nameRE = /^\s*function ([^ (]*)/;
   var NAME$1 = 'name';
 
   // 19.2.4.2 name
-  NAME$1 in FProto || _descriptors && dP$3(FProto, NAME$1, {
+  NAME$1 in FProto || _descriptors && dP$4(FProto, NAME$1, {
     configurable: true,
     get: function () {
       try {
@@ -7404,9 +7562,7 @@ typeof navigator === "object" && (function (global, factory) {
 
   var loadjs_umd = createCommonjsModule(function (module, exports) {
   (function(root, factory) {
-    if (typeof undefined === 'function' && undefined.amd) {
-      undefined([], factory);
-    } else {
+    {
       module.exports = factory();
     }
   }(commonjsGlobal, function() {
@@ -9259,7 +9415,10 @@ typeof navigator === "object" && (function (global, factory) {
 
   // TODO: Use a WeakMap for private globals
   // const globals = new WeakMap();
+
+  var _registeredPlugins = new Map(); //_registeredPlugins.set("plugins", {});
   // Plyr instance
+
 
   var Plyr =
   /*#__PURE__*/
@@ -9500,7 +9659,12 @@ typeof navigator === "object" && (function (global, factory) {
 
       if (this.config.ads.enabled) {
         this.ads = new Ads(this);
-      } // Autoplay if required
+      } //iterate registered plugins
+
+
+      _registeredPlugins.forEach(function (plugin) {
+        plugin(_this, _this.media, _this.elements.container);
+      }); // Autoplay if required
 
 
       if (this.config.autoplay) {
@@ -9509,14 +9673,7 @@ typeof navigator === "object" && (function (global, factory) {
 
 
       this.lastSeekTime = 0;
-    } // ---------------------------------------
-    // API
-    // ---------------------------------------
-
-    /**
-     * Types and provider helpers
-     */
-
+    }
 
     _createClass(Plyr, [{
       key: "play",
@@ -9849,6 +10006,13 @@ typeof navigator === "object" && (function (global, factory) {
 
     }, {
       key: "isHTML5",
+      // ---------------------------------------
+      // API
+      // ---------------------------------------
+
+      /**
+       * Types and provider helpers
+       */
       get: function get() {
         return Boolean(this.provider === providers.html5);
       }
@@ -10181,7 +10345,7 @@ typeof navigator === "object" && (function (global, factory) {
         this.media.loop = toggle; // Set default to be a true toggle
 
         /* const type = ['start', 'end', 'all', 'none', 'toggle'].includes(input) ? input : 'toggle';
-         switch (type) {
+          switch (type) {
             case 'start':
                 if (this.config.loop.end && this.config.loop.end <= this.currentTime) {
                     this.config.loop.end = null;
@@ -10189,20 +10353,20 @@ typeof navigator === "object" && (function (global, factory) {
                 this.config.loop.start = this.currentTime;
                 // this.config.loop.indicator.start = this.elements.display.played.value;
                 break;
-             case 'end':
+              case 'end':
                 if (this.config.loop.start >= this.currentTime) {
                     return this;
                 }
                 this.config.loop.end = this.currentTime;
                 // this.config.loop.indicator.end = this.elements.display.played.value;
                 break;
-             case 'all':
+              case 'all':
                 this.config.loop.start = 0;
                 this.config.loop.end = this.duration - 2;
                 this.config.loop.indicator.start = 0;
                 this.config.loop.indicator.end = 100;
                 break;
-             case 'toggle':
+              case 'toggle':
                 if (this.config.loop.active) {
                     this.config.loop.start = 0;
                     this.config.loop.end = null;
@@ -10211,7 +10375,7 @@ typeof navigator === "object" && (function (global, factory) {
                     this.config.loop.end = this.duration - 2;
                 }
                 break;
-             default:
+              default:
                 this.config.loop.start = 0;
                 this.config.loop.end = null;
                 break;
@@ -10377,6 +10541,11 @@ typeof navigator === "object" && (function (global, factory) {
         return this.media === document.pictureInPictureElement;
       }
     }], [{
+      key: "registerPlugin",
+      value: function registerPlugin(name, plugin) {
+        _registeredPlugins.set(name, plugin);
+      }
+    }, {
       key: "supported",
       value: function supported(type, provider, inline) {
         return support.check(type, provider, inline);
